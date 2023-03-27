@@ -49,6 +49,10 @@ def process_message(launcher_type: str, launcher_id: int, text_message: str, mes
     reply = []
     session_name = "{}_{}".format(launcher_type, launcher_id)
 
+    config = pkg.utils.context.get_config()
+    if config.debug_mode and launcher_type == "group":
+        return []
+
     # 检查发送方是否被禁用
     if banlist.is_banned(launcher_type, launcher_id, sender_id):
         logging.info("根据禁用列表忽略{}_{}的消息".format(launcher_type, launcher_id))

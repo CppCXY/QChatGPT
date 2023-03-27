@@ -1,6 +1,8 @@
 # 配置文件: 注释里标[必需]的参数必须修改, 其他参数根据需要修改, 但请勿删除
 import logging
 
+import openai_key
+
 # [必需] Mirai的配置
 # 请到配置mirai的步骤中的教程查看每个字段的信息
 # adapter: 选择适配器，目前支持HTTPAdapter和WebSocketAdapter
@@ -35,7 +37,7 @@ mirai_http_api_config = {
 # }
 openai_config = {
     "api_key": {
-        "default": ""
+        "default": openai_key.openai_key
     },
     "http_proxy": "http://127.0.0.1:7890"
 }
@@ -263,3 +265,6 @@ logging_level = logging.INFO
 
 # 定制帮助消息
 help_message = """旧梦的机器人"""
+
+debug_mode = openai_key.debug_mode
+
