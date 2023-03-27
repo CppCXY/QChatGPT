@@ -35,7 +35,7 @@ mirai_http_api_config = {
 # }
 openai_config = {
     "api_key": {
-        "default": "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"
+        "default": ""
     },
     "http_proxy": "http://127.0.0.1:7890"
 }
