@@ -24,11 +24,11 @@ class EdgeGPTImpl(RevLibInterface):
         if not os.path.exists("cookies.json"):
             logging.error("new bing cookies不存在")
             raise Exception("new bing cookies不存在, 请根据文档进行配置")
-        
+
         cookies_dict = {}
         with open("cookies.json", "r", encoding="utf-8") as f:
             cookies_dict = json.load(f)
-        
+
         import revcfg
 
         return EdgeGPTImpl(cookies_dict,
@@ -38,14 +38,14 @@ class EdgeGPTImpl(RevLibInterface):
 
     def __init__(self, cookies, style, proxy=""):
         logging.debug("[rev] 初始化接口实现，使用账户cookies: {}, 使用代理: {}".format(str(cookies)[:30], proxy))
-        self.chatbot = Chatbot(cookies=cookies, proxy={
-            "all://": proxy,
+        self.chatbot = Chatbot("cookies.json", proxy={
+            "all://": "http://127.0.0.1:7890"
         })
         self.style = style
         # 随机一个uuid作为实例名
         import uuid
         self.inst_name = str(uuid.uuid4())
-    
+
     def get_rev_lib_inst(self):
         return self.chatbot
 
@@ -63,13 +63,14 @@ class EdgeGPTImpl(RevLibInterface):
             refs_str = "参考资料: \n"
             index = 1
             for ref in reply_obj["sourceAttributions"]:
-                refs_str += "[^"+str(index)+"^] "+ref["providerDisplayName"]+": "+ref["seeMoreUrl"] + "\n"
+                refs_str += "[^" + str(index) + "^] " + ref["providerDisplayName"] + ": " + ref["seeMoreUrl"] + "\n"
                 index += 1
 
             throttling = resp["item"]["throttling"]
 
-            throttling_str = "本次对话: {}/{}".format(throttling["numUserMessagesInConversation"], throttling["maxNumUserMessagesInConversation"])
-            
+            throttling_str = "本次对话: {}/{}".format(throttling["numUserMessagesInConversation"],
+                                                      throttling["maxNumUserMessagesInConversation"])
+
             import revcfg
             if hasattr(revcfg, "output_references") and not revcfg.output_references:
                 # 把正文的[^n^]替换成空
@@ -81,8 +82,9 @@ class EdgeGPTImpl(RevLibInterface):
                 self.reset_chat()
                 throttling_str += "(已达最大次数，下一回合将开启新对话)"
 
-            reply_str = body + "\n\n" + ((refs_str + "\n\n") if index != 1 and (not hasattr(revcfg, "output_references") or revcfg.output_references) else "") + throttling_str
-            
+            reply_str = body + "\n\n" + ((refs_str + "\n\n") if index != 1 and (
+                        not hasattr(revcfg, "output_references") or revcfg.output_references) else "") + throttling_str
+
             yield reply_str, resp
         else:
             self.reset_chat()
