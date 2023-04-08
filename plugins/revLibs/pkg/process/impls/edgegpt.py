@@ -6,7 +6,7 @@ import json
 import asyncio
 
 from plugins.revLibs.pkg.models.interface import RevLibInterface
-from EdgeGPT import Chatbot, ConversationStyle
+from EdgeGPT import Chatbot, ConversationStyle, ChatHub, Conversation
 
 
 class EdgeGPTImpl(RevLibInterface):
@@ -40,6 +40,7 @@ class EdgeGPTImpl(RevLibInterface):
         logging.debug("[rev] 初始化接口实现，使用账户cookies: {}, 使用代理: {}".format(str(cookies)[:30], proxy))
         self.chatbot = Chatbot(cookies=cookies, proxy=proxy)
         self.style = style
+        self.proxy = proxy
         # 随机一个uuid作为实例名
         import uuid
         self.inst_name = str(uuid.uuid4())
@@ -81,7 +82,7 @@ class EdgeGPTImpl(RevLibInterface):
                 throttling_str += "(已达最大次数，下一回合将开启新对话)"
 
             reply_str = body + "\n\n" + ((refs_str + "\n\n") if index != 1 and (
-                        not hasattr(revcfg, "output_references") or revcfg.output_references) else "") + throttling_str
+                    not hasattr(revcfg, "output_references") or revcfg.output_references) else "") + throttling_str
 
             yield reply_str, resp
         else:
@@ -89,7 +90,15 @@ class EdgeGPTImpl(RevLibInterface):
             yield "err: 可能由于内容不当，对话已被接口拒绝，下一回合将开启新的会话。", resp
 
     def reset_chat(self):
-        asyncio.run(self.chatbot.reset())
+        # workaround for edgeGPT
+        asyncio.run(self.reset(self.chatbot))
+
+    async def reset(self, chatbot) -> None:
+        """
+        Reset the conversation
+        """
+        await chatbot.close()
+        chatbot.chat_hub = ChatHub(Conversation(cookies=chatbot.cookies, proxy=chatbot.proxy))
 
     def rollback(self):
         pass
