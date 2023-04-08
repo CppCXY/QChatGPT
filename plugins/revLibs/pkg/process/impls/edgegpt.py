@@ -37,7 +37,7 @@ class EdgeGPTImpl(RevLibInterface):
                            ), True, cookies_dict
 
     def __init__(self, cookies, style, proxy=""):
-        logging.debug("[rev] 初始化接口实现，使用账户cookies: {}".format(str(cookies)[:30]))
+        logging.debug("[rev] 初始化接口实现，使用账户cookies: {}, 使用代理: {}".format(str(cookies)[:30], proxy))
         self.chatbot = Chatbot(cookies=cookies, proxy=proxy)
         self.style = style
         # 随机一个uuid作为实例名
