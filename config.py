@@ -98,7 +98,11 @@ preset_mode = "default"
 # 正则表达式简明教程：https://www.runoob.com/regexp/regexp-tutorial.html
 response_rules = {
     "at": False,  # 是否响应at机器人的消息
-    "prefix": ["chat "],
+    "prefix": [],
+    "how_response": {
+        "chat ": "gpt",
+        "bing ": "newbing"
+    },
     "regexp": [],  # "为什么.*", "怎么?样.*", "怎么.*", "如何.*", "[Hh]ow to.*", "[Ww]hy not.*", "[Ww]hat is.*", ".*怎么办", ".*咋办"
     "random_rate": 0.0,  # 随机响应概率，0.0-1.0，0.0为不随机响应，1.0为响应所有消息, 仅在前几项判断不通过时生效
 }

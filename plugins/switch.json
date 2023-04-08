@@ -1,0 +1,6 @@
+{
+    "revLibs": {
+        "path": "plugins/revLibs/main.py",
+        "enabled": true
+    }
+}

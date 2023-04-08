@@ -42,7 +42,7 @@ def is_admin(qq: int) -> bool:
 
 
 def process_message(launcher_type: str, launcher_id: int, text_message: str, message_chain: MessageChain,
-                    sender_id: int) -> MessageChain:
+                    sender_id: int, who='gpt') -> MessageChain:
     global processing
 
     mgr = pkg.utils.context.get_qqbot_manager()
@@ -52,7 +52,7 @@ def process_message(launcher_type: str, launcher_id: int, text_message: str, mes
 
     config = pkg.utils.context.get_config()
     if config.debug_mode and launcher_type == "group":
-        return []
+        return MessageChain(Plain("[bot] 当前正在维护"))
 
     # 检查发送方是否被禁用
     if banlist.is_banned(launcher_type, launcher_id, sender_id):
@@ -69,7 +69,7 @@ def process_message(launcher_type: str, launcher_id: int, text_message: str, mes
         result = asyncio.run(result)
         if result.mute_time_remaining > 0:
             logging.info("机器人被禁言,跳过消息处理(group_{},剩余{}s)".format(launcher_id,
-                                                                                result.mute_time_remaining))
+                                                                              result.mute_time_remaining))
             return reply
 
     import config
@@ -101,6 +101,7 @@ def process_message(launcher_type: str, launcher_id: int, text_message: str, mes
                     'params': text_message[1:].strip().split(' ')[1:],
                     'text_message': text_message,
                     'is_admin': is_admin(sender_id),
+                    'who': who
                 }
                 event = plugin_host.emit(plugin_models.PersonCommandSent
                                          if launcher_type == 'person'
@@ -115,7 +116,8 @@ def process_message(launcher_type: str, launcher_id: int, text_message: str, mes
 
                 if not event.is_prevented_default():
                     reply = pkg.qqbot.command.process_command(session_name, text_message,
-                                                              mgr, config, launcher_type, launcher_id, sender_id, is_admin(sender_id))
+                                                              mgr, config, launcher_type, launcher_id, sender_id,
+                                                              is_admin(sender_id))
 
             else:  # 消息
                 # 限速丢弃检查
@@ -124,7 +126,8 @@ def process_message(launcher_type: str, launcher_id: int, text_message: str, mes
                     if ratelimit.is_reach_limit(session_name):
                         logging.info("根据限速策略丢弃[{}]消息: {}".format(session_name, text_message))
 
-                        return MessageChain(["[bot]"+tips_custom.rate_limit_drop_tip]) if tips_custom.rate_limit_drop_tip != "" else []
+                        return MessageChain([
+                                                "[bot]" + tips_custom.rate_limit_drop_tip]) if tips_custom.rate_limit_drop_tip != "" else []
 
                 before = time.time()
                 # 触发插件事件
@@ -133,6 +136,7 @@ def process_message(launcher_type: str, launcher_id: int, text_message: str, mes
                     "launcher_id": launcher_id,
                     "sender_id": sender_id,
                     "text_message": text_message,
+                    'who': who
                 }
                 event = plugin_host.emit(plugin_models.PersonNormalMessageReceived
                                          if launcher_type == 'person'
@@ -152,7 +156,7 @@ def process_message(launcher_type: str, launcher_id: int, text_message: str, mes
                 # 限速等待时间
                 if config.rate_limit_strategy == "wait":
                     time.sleep(ratelimit.get_rest_wait_time(session_name, time.time() - before))
-                
+
                 ratelimit.add_usage(session_name)
 
             if reply is not None and len(reply) > 0 and (type(reply[0]) == str or type(reply[0]) == mirai.Plain):

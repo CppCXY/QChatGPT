@@ -24,6 +24,7 @@ import tips as tips_custom
 
 # 检查消息是否符合泛响应匹配机制
 def check_response_rule(text: str):
+    who = "gpt"
     config = pkg.utils.context.get_config()
 
     rules = config.response_rules
@@ -31,7 +32,14 @@ def check_response_rule(text: str):
     if 'prefix' in rules:
         for rule in rules['prefix']:
             if text.startswith(rule):
-                return True, text.replace(rule, "", 1)
+                return True, text.replace(rule, "", 1), who
+
+    # 检查响应人
+    if 'who_response' in rules:
+        who_response: dict = rules['who_response']
+        for rule in who_response.items():
+            if text.startswith(rule[0]):
+                return True, text.replace(rule[0], "", 1), rule[1]
 
     # 检查正则表达式匹配
     if 'regexp' in rules:
@@ -39,9 +47,9 @@ def check_response_rule(text: str):
             import re
             match = re.match(rule, text)
             if match:
-                return True, text
+                return True, text, who
 
-    return False, ""
+    return False, "", who
 
 
 def response_at():
@@ -114,7 +122,6 @@ class QQBotManager:
         async def on_friend_message(event: FriendMessage):
 
             def friend_message_handler(event: FriendMessage):
-
                 # 触发事件
                 args = {
                     "launcher_type": "person",
@@ -244,14 +251,14 @@ class QQBotManager:
                 failed = 0
                 for i in range(self.retry):
                     try:
-                        
+
                         @func_set_timeout(config.process_message_timeout)
                         def time_ctrl_wrapper():
                             reply = processor.process_message('person', event.sender.id, str(event.message_chain),
-                                                            event.message_chain,
-                                                            event.sender.id)
+                                                              event.message_chain,
+                                                              event.sender.id)
                             return reply
-                        
+
                         reply = time_ctrl_wrapper()
                         break
                     except FunctionTimedOut:
@@ -275,7 +282,7 @@ class QQBotManager:
         import config
         reply = ''
 
-        def process(text=None) -> str:
+        def process(text=None, who='gpt') -> str:
             replys = ""
             if At(self.bot.qq) in event.message_chain:
                 event.message_chain.remove(At(self.bot.qq))
@@ -287,11 +294,12 @@ class QQBotManager:
                     @func_set_timeout(config.process_message_timeout)
                     def time_ctrl_wrapper():
                         replys = processor.process_message('group', event.group.id,
-                                                        str(event.message_chain).strip() if text is None else text,
-                                                        event.message_chain,
-                                                        event.sender.id)
+                                                           str(event.message_chain).strip() if text is None else text,
+                                                           event.message_chain,
+                                                           event.sender.id,
+                                                           who)
                         return replys
-                    
+
                     replys = time_ctrl_wrapper()
                     break
                 except FunctionTimedOut:
@@ -316,10 +324,10 @@ class QQBotManager:
                 # 直接调用
                 reply = process()
             else:
-                check, result = check_response_rule(str(event.message_chain).strip())
+                check, result, who = check_response_rule(str(event.message_chain).strip())
 
                 if check:
-                    reply = process(result.strip())
+                    reply = process(result.strip(), who)
                 # 检查是否随机响应
                 elif random_responding():
                     logging.info("随机响应group_{}消息".format(event.group.id))
@@ -340,7 +348,6 @@ class QQBotManager:
                 for adm in config.admin_qq:
                     send_task = self.bot.send_friend_message(adm, "[bot]{}".format(message))
                     threading.Thread(target=asyncio.run, args=(send_task,)).start()
-
 
     def notify_admin_message_chain(self, message):
         config = pkg.utils.context.get_config()

@@ -3,8 +3,6 @@ __pycache__/
 database.db
 qchatgpt.log
 /banlist.py
-plugins/
-!plugins/__init__.py
 /revcfg.py
 prompts/
 logs/
