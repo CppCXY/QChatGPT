@@ -48,7 +48,8 @@ class RevSession:
         elif __rev_interface_impl_class__ is EdgeGPTImpl:
             logging.debug("[rev] 逆向接口实现为EdgeGPTImpl")
             self.__rev_interface_impl__,_,_ = __rev_interface_impl_class__.create_instance()
-            self.reset()
+            # 为什么要重置会话
+            # self.reset()
 
         threading.Thread(target=self.check_expire_loop, daemon=True).start()
 
