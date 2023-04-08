@@ -51,7 +51,7 @@ def process_message(launcher_type: str, launcher_id: int, text_message: str, mes
     session_name = "{}_{}".format(launcher_type, launcher_id)
 
     config = pkg.utils.context.get_config()
-    if config.debug_mode and launcher_type == "group":
+    if config.debug_mode and launcher_type == "group" and launcher_id != 162900465:
         return MessageChain(Plain("[bot] 当前正在维护"))
 
     # 检查发送方是否被禁用
