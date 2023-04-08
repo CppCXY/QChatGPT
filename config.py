@@ -202,7 +202,7 @@ blob_message_threshold = 256
 # 长消息处理策略
 # - "image": 将长消息转换为图片发送
 # - "forward": 将长消息转换为转发消息组件发送
-blob_message_strategy = "forward"
+blob_message_strategy = "image"
 
 # 文字转图片时使用的字体文件路径
 # 当策略为"image"时生效
