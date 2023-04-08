@@ -19,13 +19,12 @@ import pkg.utils.context
 
 import pkg.plugin.host as plugin_host
 import pkg.plugin.models as plugin_models
+import tips as tips_custom
 
 
 # 检查消息是否符合泛响应匹配机制
 def check_response_rule(text: str):
     config = pkg.utils.context.get_config()
-    if not hasattr(config, 'response_rules'):
-        return False, ''
 
     rules = config.response_rules
     # 检查前缀匹配
@@ -201,7 +200,6 @@ class QQBotManager:
 
     def first_time_init(self, mirai_http_api_config: dict):
         """热重载后不再运行此函数"""
-
         if 'adapter' not in mirai_http_api_config or mirai_http_api_config['adapter'] == "WebSocketAdapter":
             bot = Mirai(
                 qq=mirai_http_api_config['qq'],
@@ -229,8 +227,7 @@ class QQBotManager:
     def send(self, event, msg, check_quote=True):
         config = pkg.utils.context.get_config()
         asyncio.run(
-            self.bot.send(event, msg, quote=True if hasattr(config,
-                                                            "quote_origin") and config.quote_origin and check_quote else False))
+            self.bot.send(event, msg, quote=True if config.quote_origin and check_quote else False))
 
     # 私聊消息处理
     def on_person_message(self, event: MessageEvent):
@@ -268,7 +265,7 @@ class QQBotManager:
                 if failed == self.retry:
                     pkg.openai.session.get_session('person_{}'.format(event.sender.id)).release_response_lock()
                     self.notify_admin("{} 请求超时".format("person_{}".format(event.sender.id)))
-                    reply = ["[bot]err:请求超时"]
+                    reply = [tips_custom.reply_message]
 
         if reply:
             return self.send(event, reply, check_quote=False)
@@ -308,7 +305,7 @@ class QQBotManager:
             if failed == self.retry:
                 pkg.openai.session.get_session('group_{}'.format(event.group.id)).release_response_lock()
                 self.notify_admin("{} 请求超时".format("group_{}".format(event.group.id)))
-                replys = ["[bot]err:请求超时"]
+                replys = [tips_custom.replys_message]
 
             return replys
 
@@ -334,7 +331,7 @@ class QQBotManager:
     # 通知系统管理员
     def notify_admin(self, message: str):
         config = pkg.utils.context.get_config()
-        if hasattr(config, "admin_qq") and config.admin_qq != 0 and config.admin_qq != []:
+        if config.admin_qq != 0 and config.admin_qq != []:
             logging.info("通知管理员:{}".format(message))
             if type(config.admin_qq) == int:
                 send_task = self.bot.send_friend_message(config.admin_qq, "[bot]{}".format(message))
@@ -347,7 +344,7 @@ class QQBotManager:
 
     def notify_admin_message_chain(self, message):
         config = pkg.utils.context.get_config()
-        if hasattr(config, "admin_qq") and config.admin_qq != 0 and config.admin_qq != []:
+        if config.admin_qq != 0 and config.admin_qq != []:
             logging.info("通知管理员:{}".format(message))
             if type(config.admin_qq) == int:
                 send_task = self.bot.send_friend_message(config.admin_qq, message)

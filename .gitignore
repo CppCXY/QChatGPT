@@ -17,3 +17,5 @@ override.json
 cookies.json
 res/announcement_saved
 openai_key.py
+cmdpriv.json
+tips.py
