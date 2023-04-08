@@ -31,11 +31,14 @@ class EdgeGPTImpl(RevLibInterface):
         
         import revcfg
 
-        return EdgeGPTImpl(cookies_dict, revcfg.new_bing_style if hasattr(revcfg, "new_bing_style") else ConversationStyle.balanced), True, cookies_dict
+        return EdgeGPTImpl(cookies_dict,
+                           revcfg.new_bing_style if hasattr(revcfg, "new_bing_style") else ConversationStyle.balanced,
+                           revcfg.new_bing_proxy if hasattr(revcfg, "new_bing_proxy") else ""
+                           ), True, cookies_dict
 
-    def __init__(self, cookies, style):
+    def __init__(self, cookies, style, proxy=""):
         logging.debug("[rev] 初始化接口实现，使用账户cookies: {}".format(str(cookies)[:30]))
-        self.chatbot = Chatbot(cookies=cookies)
+        self.chatbot = Chatbot(cookies=cookies, proxy=proxy)
         self.style = style
         # 随机一个uuid作为实例名
         import uuid

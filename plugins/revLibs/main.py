@@ -40,7 +40,6 @@ def check_config():
 # 注册插件
 @register(name="revLibs", description="接入acheong08/ChatGPT等逆向库", version="0.4.2", author="RockChinQ")
 class RevLibsPlugin(Plugin):
-
     chatbot: Chatbot = None
 
     # 插件加载时触发
@@ -81,7 +80,8 @@ class RevLibsPlugin(Plugin):
                 revss.__rev_interface_impl_class__ = edgegptInst
                 logging.info("[rev] 已加载逆向库acheong08/EdgeGPT, 使用接口实现类: " + str(edgegptInst))
             else:
-                logging.error("[rev] 未知的逆向库: " + revcfg.reverse_lib + ", 请检查配置文件是否填写正确或尝试更新逆向库插件")
+                logging.error(
+                    "[rev] 未知的逆向库: " + revcfg.reverse_lib + ", 请检查配置文件是否填写正确或尝试更新逆向库插件")
                 time.sleep(5)
                 return
         except:
@@ -94,7 +94,7 @@ class RevLibsPlugin(Plugin):
         import config
 
         revcfg.process_message_timeout = config.process_message_timeout
-        config.process_message_timeout = 10*60
+        config.process_message_timeout = 10 * 60
         logging.info("[rev] 已将主程序消息处理超时时间设置为10分钟")
 
         @on(PersonNormalMessageReceived)
@@ -105,8 +105,9 @@ class RevLibsPlugin(Plugin):
                 if kwargs["who"] != "newbing":
                     return
 
-                reply_message = procmsg.process_message(session_name=kwargs['launcher_type']+"_"+str(kwargs['launcher_id']),
-                                                        prompt=kwargs['text_message'], **kwargs)
+                reply_message = procmsg.process_message(
+                    session_name=kwargs['launcher_type'] + "_" + str(kwargs['launcher_id']),
+                    prompt=kwargs['text_message'], **kwargs)
 
                 logging.debug("[rev] " + reply_message)
 
@@ -116,14 +117,14 @@ class RevLibsPlugin(Plugin):
                 import config
                 if config.hide_exce_info_to_user:
                     reply_message = config.alter_tip_message
-                    kwargs['host'].notify_admin("[rev] 处理消息时出现错误:\n"+traceback.format_exc())
+                    kwargs['host'].notify_admin("[rev] 处理消息时出现错误:\n" + traceback.format_exc())
                 else:
-                    reply_message = "处理消息时出现错误，请联系管理员"+"\n"+traceback.format_exc()
-                
+                    reply_message = "处理消息时出现错误，请联系管理员" + "\n" + traceback.format_exc()
+
             if reply_message != "":
                 event.add_return(
                     "reply",
-                    ["{}".format(revcfg.reply_prefix)+reply_message]
+                    ["{}".format(revcfg.reply_prefix) + reply_message]
                 )
 
             event.prevent_default()
@@ -137,18 +138,19 @@ class RevLibsPlugin(Plugin):
                 if kwargs["who"] != "newbing":
                     return
 
-                reply_message = proccmd.process_command(session_name=kwargs['launcher_type']+"_"+str(kwargs['launcher_id']),
-                                                        **kwargs)
+                reply_message = proccmd.process_command(
+                    session_name=kwargs['launcher_type'] + "_" + str(kwargs['launcher_id']),
+                    **kwargs)
 
                 logging.debug("[rev] " + reply_message)
             except Exception as e:
                 logging.error("[rev] " + traceback.format_exc())
-                reply_message = "处理命令时出现错误，请联系管理员"+"\n"+traceback.format_exc()
-            
+                reply_message = "处理命令时出现错误，请联系管理员" + "\n" + traceback.format_exc()
+
             if reply_message.strip() != "":
                 event.add_return(
                     "reply",
-                    ["{}(cmd)".format(revcfg.reply_prefix)+reply_message],
+                    ["{}(cmd)".format(revcfg.reply_prefix) + reply_message],
                 )
                 event.prevent_default()
                 event.prevent_postorder()
