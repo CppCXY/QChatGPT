@@ -36,11 +36,9 @@ class EdgeGPTImpl(RevLibInterface):
                            revcfg.new_bing_proxy if hasattr(revcfg, "new_bing_proxy") else ""
                            ), True, cookies_dict
 
-    def __init__(self, cookies, style, proxy=""):
+    def __init__(self, cookies, style, proxy="http://127.0.0.1:7890"):
         logging.debug("[rev] 初始化接口实现，使用账户cookies: {}, 使用代理: {}".format(str(cookies)[:30], proxy))
-        self.chatbot = Chatbot("cookies.json", proxy={
-            "all://": "http://127.0.0.1:7890"
-        })
+        self.chatbot = Chatbot(cookies=cookies, proxy=proxy)
         self.style = style
         # 随机一个uuid作为实例名
         import uuid
