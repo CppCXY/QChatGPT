@@ -35,7 +35,7 @@ def check_response_rule(text: str):
                 return True, text.replace(rule, "", 1), who
 
     # 检查响应人
-    if 'who_response' in rules:
+    if 'how_response' in rules:
         who_response: dict = rules['who_response']
         for rule in who_response.items():
             if text.startswith(rule[0]):

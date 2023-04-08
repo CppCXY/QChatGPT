@@ -184,7 +184,7 @@ image_api_params = {
 }
 
 # 群内回复消息时是否引用原消息
-quote_origin = True
+quote_origin = False
 
 # 回复绘图时是否包含图片描述
 include_image_description = True
