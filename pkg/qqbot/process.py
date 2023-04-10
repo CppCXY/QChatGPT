@@ -54,6 +54,9 @@ def process_message(launcher_type: str, launcher_id: int, text_message: str, mes
     if config.debug_mode and launcher_type == "group" and launcher_id != 162900465:
         return MessageChain(Plain("[bot] 当前正在维护"))
 
+    if who == "bing" and not is_admin(sender_id):
+        return MessageChain(Plain("[bot] 当前仅管理员可用bing"))
+    
     # 检查发送方是否被禁用
     if banlist.is_banned(launcher_type, launcher_id, sender_id):
         logging.info("根据禁用列表忽略{}_{}的消息".format(launcher_type, launcher_id))
