@@ -1,0 +1,3 @@
+[submodule "plugins/revLibs"]
+	path = plugins/revLibs
+	url = git@github.com:CppCXY/revLibs.git
