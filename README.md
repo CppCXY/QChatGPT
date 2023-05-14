@@ -1,9 +1,18 @@
 # QChatGPT🤖
 
+<p align="center">
+<img src="res/social.png" alt="QChatGPT" width="640" />
+</p>
+
+[English](README_en.md) | 简体中文
+
+[![GitHub release (latest by date)](https://img.shields.io/github/v/release/RockChinQ/QChatGPT?style=flat-square)](https://github.com/RockChinQ/QChatGPT/releases/latest)
+
+> 2023/4/27 正在对纯Python实现的QQ登录框架、YAML配置文件、异步编程等功能进行概念验证，欢迎体验[LightQChat](https://github.com/RockChinQ/LightQChat)项目  
+> 2023/4/24 支持使用go-cqhttp登录QQ，请查看[此文档](https://github.com/RockChinQ/QChatGPT/wiki/go-cqhttp%E9%85%8D%E7%BD%AE)  
 > 2023/3/18 现已支持GPT-4 API（内测），请查看`config-template.py`中的`completion_api_params`  
 > 2023/3/15 逆向库已支持New Bing，使用方法查看[插件文档](https://github.com/RockChinQ/revLibs)  
 
-- **客官，来都来了，不点个⭐吗？**
 - 到[项目Wiki](https://github.com/RockChinQ/QChatGPT/wiki)可了解项目详细信息
 - 官方交流、答疑群: 656285629  
   - **进群提问前请您`确保`已经找遍文档和issue均无法解决**  
@@ -24,6 +33,7 @@
 - ChatGPT网页版GPT-3.5模型, 由[插件](https://github.com/RockChinQ/revLibs)接入
 - ChatGPT网页版GPT-4模型, 目前需要ChatGPT Plus订阅, 由[插件](https://github.com/RockChinQ/revLibs)接入
 - New Bing逆向库, 由[插件](https://github.com/RockChinQ/revLibs)接入
+- HuggingChat, 由[插件](https://github.com/RockChinQ/revLibs)接入, 无需账号，仅支持英文
 
 ### 故事续写
 
@@ -132,6 +142,15 @@
   - 允许用户自定义报错、帮助等提示信息
   - 请查看`tips.py`
 </details>
+
+### 🏞️截图
+
+<img alt="私聊GPT-3.5" src="res/screenshots/person_gpt3.5.png" width="400"/>
+<br/>
+<img alt="群聊GPT-3.5" src="res/screenshots/group_gpt3.5.png" width="400"/>
+<br/>
+<img alt="New Bing" src="res/screenshots/person_newbing.png" width="400"/>
+
 </details>
 
 详情请查看[Wiki功能使用页](https://github.com/RockChinQ/QChatGPT/wiki/%E5%8A%9F%E8%83%BD%E4%BD%BF%E7%94%A8#%E5%8A%9F%E8%83%BD%E7%82%B9%E5%88%97%E4%B8%BE)
@@ -159,6 +178,8 @@
 
 #### Docker方式
 
+> docker方式目前仅支持使用mirai登录，若您不**熟悉**docker的操作及相关知识，强烈建议您使用其他方式部署，我们**不会且难以**解决您主机上多个容器的连接问题。
+
 请查看[此文档](res/docs/docker_deploy.md)  
 由[@mikumifa](https://github.com/mikumifa)贡献
 
@@ -176,12 +197,29 @@
 
 - 请使用Python 3.9.x以上版本   
 
-#### 配置Mirai
+#### ① 配置QQ登录框架
 
-按照[此教程](https://yiri-mirai.wybxc.cc/tutorials/01/configuration)配置Mirai及YiriMirai  
-启动mirai-console后，使用`login`命令登录QQ账号，保持mirai-console运行状态
+目前支持mirai和go-cqhttp，配置任意一个即可
 
-#### 配置主程序
+<details>
+<summary>mirai</summary>
+
+1. 按照[此教程](https://yiri-mirai.wybxc.cc/tutorials/01/configuration)配置Mirai及mirai-api-http  
+2. 启动mirai-console后，使用`login`命令登录QQ账号，保持mirai-console运行状态  
+3. 在下一步配置主程序时请在config.py中将`msg_source_adapter`设为`yirimirai`
+
+</details>
+
+<details>
+<summary>go-cqhttp</summary>
+
+1. 按照[此文档](https://github.com/RockChinQ/QChatGPT/wiki/go-cqhttp%E9%85%8D%E7%BD%AE)配置go-cqhttp
+2. 启动go-cqhttp，确保登录成功，保持运行
+3. 在下一步配置主程序时请在config.py中将`msg_source_adapter`设为`nakuru`
+
+</details>
+
+#### ② 配置主程序
 
 1. 克隆此项目
 
@@ -193,7 +231,7 @@ cd QChatGPT
 2. 安装依赖
 
 ```bash
-pip3 install requests yiri-mirai openai colorlog func_timeout dulwich Pillow
+pip3 install requests yiri-mirai openai colorlog func_timeout dulwich Pillow nakuru-project-idk
 ```
 
 3. 运行一次主程序，生成配置文件
@@ -248,7 +286,7 @@ python3 main.py
 
 欢迎提交新的插件
 
-- [revLibs](https://github.com/RockChinQ/revLibs) - 将ChatGPT网页版接入此项目，关于[官方接口和网页版有什么区别](https://github.com/RockChinQ/QChatGPT/wiki/%E5%AE%98%E6%96%B9%E6%8E%A5%E5%8F%A3%E4%B8%8EChatGPT%E7%BD%91%E9%A1%B5%E7%89%88)
+- [revLibs](https://github.com/RockChinQ/revLibs) - 将ChatGPT网页版接入此项目，关于[官方接口和网页版有什么区别](https://github.com/RockChinQ/QChatGPT/wiki/%E5%AE%98%E6%96%B9%E6%8E%A5%E5%8F%A3%E3%80%81ChatGPT%E7%BD%91%E9%A1%B5%E7%89%88%E3%80%81ChatGPT-API%E5%8C%BA%E5%88%AB)
 - [Switcher](https://github.com/RockChinQ/Switcher) - 支持通过指令切换使用的模型
 - [hello_plugin](https://github.com/RockChinQ/hello_plugin) - `hello_plugin` 的储存库形式，插件开发模板
 - [dominoar/QChatPlugins](https://github.com/dominoar/QchatPlugins) - dominoar编写的诸多新功能插件（语音输出、Ranimg、屏蔽词规则等）
@@ -257,7 +295,8 @@ python3 main.py
 - [RockChinQ/WaitYiYan](https://github.com/RockChinQ/WaitYiYan) - 实时获取百度`文心一言`等待列表人数
 - [chordfish-k/QChartGPT_Emoticon_Plugin](https://github.com/chordfish-k/QChartGPT_Emoticon_Plugin) - 使机器人根据回复内容发送表情包
 - [oliverkirk-sudo/ChatPoeBot](https://github.com/oliverkirk-sudo/ChatPoeBot) - 接入[Poe](https://poe.com/)上的机器人
-- [wenyinos/ChatAPI2D](https://github.com/wenyinos/ChatAPI2D) - 通过API2D的中转服务访问OpenAI官方接口
+- [lieyanqzu/WeatherPlugin](https://github.com/lieyanqzu/WeatherPlugin) - 天气查询插件
+- [SysStatPlugin](https://github.com/RockChinQ/SysStatPlugin) - 查看系统状态
 </details>
 
 ## 😘致谢

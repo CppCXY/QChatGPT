@@ -1,7 +1,13 @@
 # 配置文件: 注释里标[必需]的参数必须修改, 其他参数根据需要修改, 但请勿删除
 import logging
 
-# [必需] Mirai的配置
+# 消息处理协议适配器
+# 目前支持以下适配器:
+# - "yirimirai": mirai的通信框架，YiriMirai框架适配器, 请同时填写下方mirai_http_api_config
+# - "nakuru": go-cqhttp通信框架，请同时填写下方nakuru_config
+msg_source_adapter = "yirimirai"
+
+# [必需(与nakuru二选一，取决于msg_source_adapter)] Mirai的配置
 # 请到配置mirai的步骤中的教程查看每个字段的信息
 # adapter: 选择适配器，目前支持HTTPAdapter和WebSocketAdapter
 # host: 运行mirai的主机地址
@@ -16,6 +22,15 @@ mirai_http_api_config = {
     "port": 8080,
     "verifyKey": "yirimirai",
     "qq": 1234567890
+}
+
+# [必需(与mirai二选一，取决于msg_source_adapter)]
+# 使用nakuru-project框架连接go-cqhttp的配置
+nakuru_config = {
+    "host": "localhost",  # go-cqhttp的地址
+    "port": 6700,  # go-cqhttp的正向websocket端口
+    "http_port": 5700,  # go-cqhttp的正向http端口
+    "token": ""  # 若在go-cqhttp的config.yml设置了access_token, 则填写此处
 }
 
 # [必需] OpenAI的配置
@@ -108,12 +123,35 @@ preset_mode = "normal"
 # 注意：由消息前缀(prefix)匹配的消息中将会删除此前缀，正则表达式(regexp)匹配的消息不会删除匹配的部分
 #      前缀匹配优先级高于正则表达式匹配
 # 正则表达式简明教程：https://www.runoob.com/regexp/regexp-tutorial.html
+# 
+# 支持针对不同群设置不同的响应规则，例如：
+# response_rules = {
+#    "default": {
+#        "at": True,
+#        "prefix": ["/ai", "!ai", "！ai", "ai"],
+#        "regexp": [],
+#        "random_rate": 0.0,
+#    },
+#    "12345678": {
+#        "at": False,
+#        "prefix": ["/ai", "!ai", "！ai", "ai"],
+#        "regexp": [],
+#        "random_rate": 0.0,
+#    },
+# }
+#
+# 以上设置将会在群号为12345678的群中关闭at响应
+# 未单独设置的群将使用default规则
 response_rules = {
-    "at": True,  # 是否响应at机器人的消息
-    "prefix": ["/ai", "!ai", "！ai", "ai"],
-    "regexp": [],  # "为什么.*", "怎么?样.*", "怎么.*", "如何.*", "[Hh]ow to.*", "[Ww]hy not.*", "[Ww]hat is.*", ".*怎么办", ".*咋办"
-    "random_rate": 0.0,  # 随机响应概率，0.0-1.0，0.0为不随机响应，1.0为响应所有消息, 仅在前几项判断不通过时生效
+    "default": {
+        "at": True,  # 是否响应at机器人的消息
+        "prefix": ["/ai", "!ai", "！ai", "ai"],
+        "regexp": [],  # "为什么.*", "怎么?样.*", "怎么.*", "如何.*", "[Hh]ow to.*", "[Ww]hy not.*", "[Ww]hat is.*", ".*怎么办", ".*咋办"
+        "random_rate": 0.0,  # 随机响应概率，0.0-1.0，0.0为不随机响应，1.0为响应所有消息, 仅在前几项判断不通过时生效
+    },
 }
+
+
 
 # 消息忽略规则
 # 适用于私聊及群聊
@@ -212,6 +250,12 @@ blob_message_threshold = 256
 # - "forward": 将长消息转换为转发消息组件发送
 blob_message_strategy = "forward"
 
+# 允许等待
+# 同一会话内，是否等待上一条消息处理完成后再处理下一条消息
+# 若设置为False，若上一条未处理完时收到了新消息，将会丢弃新消息
+# 丢弃消息时的提示信息可以在tips.py中修改
+wait_last_done = True
+
 # 文字转图片时使用的字体文件路径
 # 当策略为"image"时生效
 #   若在Windows系统下，程序会自动使用Windows自带的微软雅黑字体
@@ -233,26 +277,49 @@ hide_exce_info_to_user = False
 sys_pool_num = 8
 
 # 执行管理员请求和指令的线程池并行线程数量，一般和管理员数量相等
-admin_pool_num = 2
+admin_pool_num = 4
 
 # 执行用户请求和指令的线程池并行线程数量
 # 如需要更高的并发，可以增大该值
-user_pool_num = 6
+user_pool_num = 8
 
 # 每个会话的过期时间，单位为秒
 # 默认值20分钟
-session_expire_time = 60 * 20
+session_expire_time = 1200
 
 # 会话限速
 # 单会话内每分钟可进行的对话次数
 # 若不需要限速，可以设置为一个很大的值
 # 默认值60次，基本上不会触发限速
-rate_limitation = 60
+#
+# 若要设置针对某特定群的限速，请使用如下格式：
+# {
+#   "group_<群号>": 60,
+#   "default": 60,
+# }
+# 若要设置针对某特定用户私聊的限速，请使用如下格式：
+# {
+#   "person_<用户QQ>": 60,
+#   "default": 60,
+# }
+# 同时设置多个群和私聊的限速，示例：
+# {
+#   "group_12345678": 60,
+#   "group_87654321": 60,
+#   "person_234567890": 60,
+#   "person_345678901": 60,
+#   "default": 60,
+# }
+#
+# 注意: 未指定的都使用default的限速值，default不可删除
+rate_limitation = {
+    "default": 60,
+}
 
 # 会话限速策略
 # - "wait": 每次对话获取到回复时，等待一定时间再发送回复，保证其不会超过限速均值
 # - "drop": 此分钟内，若对话次数超过限速次数，则丢弃之后的对话，每自然分钟重置
-rate_limit_strategy = "wait"
+rate_limit_strategy = "drop"
 
 # 是否在启动时进行依赖库更新
 upgrade_dependencies = True

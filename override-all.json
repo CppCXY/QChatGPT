@@ -1,11 +1,18 @@
 {
     "comment": "这是override.json支持的字段全集, 关于override.json机制, 请查看https://github.com/RockChinQ/QChatGPT/pull/271",
+    "msg_source_adapter": "yirimirai",
     "mirai_http_api_config": {
         "adapter": "WebSocketAdapter",
         "host": "localhost",
         "port": 8080,
         "verifyKey": "yirimirai",
         "qq": 1234567890
+    },
+    "nakuru_config": {
+        "host": "localhost",
+        "port": 6700,
+        "http_port": 5700,
+        "token": ""
     },
     "openai_config": {
         "api_key": {
@@ -20,15 +27,17 @@
     },
     "preset_mode": "normal",
     "response_rules": {
-        "at": true,
-        "prefix": [
-            "/ai",
-            "!ai",
-            "！ai",
-            "ai"
-        ],
-        "regexp": [],
-        "random_rate": 0.0
+        "default": {
+            "at": true,
+            "prefix": [
+                "/ai",
+                "!ai",
+                "！ai",
+                "ai"
+            ],
+            "regexp": [],
+            "random_rate": 0.0
+        }
     },
     "ignore_rules": {
         "prefix": [
@@ -60,15 +69,18 @@
     "show_prefix": false,
     "blob_message_threshold": 256,
     "blob_message_strategy": "forward",
+    "wait_last_done": true,
     "font_path": "",
     "retry_times": 3,
     "hide_exce_info_to_user": false,
     "sys_pool_num": 8,
-    "admin_pool_num": 2,
-    "user_pool_num": 6,
+    "admin_pool_num": 4,
+    "user_pool_num": 8,
     "session_expire_time": 1200,
-    "rate_limitation": 60,
-    "rate_limit_strategy": "wait",
+    "rate_limitation": {
+        "default": 60
+    },
+    "rate_limit_strategy": "drop",
     "upgrade_dependencies": true,
     "report_usage": true,
     "logging_level": 20

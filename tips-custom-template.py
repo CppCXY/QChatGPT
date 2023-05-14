@@ -9,6 +9,11 @@ alter_tip_message = '[bot]err:出错了，请稍后再试'
 # 若设置为空字符串，则不发送提示信息
 rate_limit_drop_tip = "本分钟对话次数超过限速次数，此对话被丢弃"
 
+# 只允许同时处理一条消息时，新消息被丢弃时的提示信息
+# 当config.py中的wait_last_done为False时生效
+# 若设置为空字符串，则不发送提示信息
+message_drop_tip = "[bot]当前有一条消息正在处理，请等待处理完成"
+
 # 指令！help帮助消息
 # config.py,line:279
 # pkg/qqbot/process.py,line:122

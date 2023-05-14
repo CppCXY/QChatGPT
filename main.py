@@ -11,6 +11,8 @@ import traceback
 
 sys.path.append(".")
 
+from pkg.utils.log import init_runtime_log_file, reset_logging
+
 try:
     import colorlog
 except ImportError:
@@ -18,6 +20,7 @@ except ImportError:
     import pkg.utils.pkgmgr as pkgmgr
     try:
         pkgmgr.install_requirements("requirements.txt")
+        pkgmgr.install_upgrade("websockets")
         import colorlog
     except ImportError:
         print("依赖不满足,请查看 https://github.com/RockChinQ/qcg-installer/issues/15")
@@ -30,13 +33,9 @@ from urllib3.exceptions import InsecureRequestWarning
 import pkg.utils.context
 
 
-log_colors_config = {
-    'DEBUG': 'green',  # cyan white
-    'INFO': 'white',
-    'WARNING': 'yellow',
-    'ERROR': 'red',
-    'CRITICAL': 'cyan',
-}
+# 是否使用override.json覆盖配置
+# 仅在启动时提供 --override 或 -r 参数时生效
+use_override = False
 
 
 def init_db():
@@ -48,62 +47,25 @@ def init_db():
 
 def ensure_dependencies():
     import pkg.utils.pkgmgr as pkgmgr
-    pkgmgr.run_pip(["install", "openai", "Pillow", "--upgrade",
-                    "-i", "https://pypi.douban.com/simple/",
-                    "--trusted-host", "pypi.douban.com"])
+    pkgmgr.run_pip(["install", "openai", "Pillow", "nakuru-project-idk", "--upgrade",
+                    "-i", "https://pypi.tuna.tsinghua.edu.cn/simple",
+                    "--trusted-host", "pypi.tuna.tsinghua.edu.cn"])
 
 
 known_exception_caught = False
 
-log_file_name = "qchatgpt.log"
 
-
-def init_runtime_log_file():
-    """为此次运行生成日志文件
-    格式: qchatgpt-yyyy-MM-dd-HH-mm-ss.log
-    """
-    global log_file_name
-
-    # 检查logs目录是否存在
-    if not os.path.exists("logs"):
-        os.mkdir("logs")
-
-    # 检查本目录是否有qchatgpt.log，若有，移动到logs目录
-    if os.path.exists("qchatgpt.log"):
-        shutil.move("qchatgpt.log", "logs/qchatgpt.legacy.log")
-
-    log_file_name = "logs/qchatgpt-%s.log" % time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())
-    
-
-def reset_logging():
-    global log_file_name
-
+def override_config():
     import config
-
-    if pkg.utils.context.context['logger_handler'] is not None:
-        logging.getLogger().removeHandler(pkg.utils.context.context['logger_handler'])
-
-    for handler in logging.getLogger().handlers:
-        logging.getLogger().removeHandler(handler)
-
-    logging.basicConfig(level=config.logging_level,  # 设置日志输出格式
-                        filename=log_file_name,  # log日志输出的文件位置和文件名
-                        format="[%(asctime)s.%(msecs)03d] %(filename)s (%(lineno)d) - [%(levelname)s] : %(message)s",
-                        # 日志输出的格式
-                        # -8表示占位符，让输出左对齐，输出长度都为8位
-                        datefmt="%Y-%m-%d %H:%M:%S"  # 时间输出的格式
-                        )
-    sh = logging.StreamHandler()
-    sh.setLevel(config.logging_level)
-    sh.setFormatter(colorlog.ColoredFormatter(
-        fmt="%(log_color)s[%(asctime)s.%(msecs)03d] %(filename)s (%(lineno)d) - [%(levelname)s] : "
-            "%(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-        log_colors=log_colors_config
-    ))
-    logging.getLogger().addHandler(sh)
-    pkg.utils.context.context['logger_handler'] = sh
-    return sh
+    # 检查override.json覆盖
+    if os.path.exists("override.json") and use_override:
+        override_json = json.load(open("override.json", "r", encoding="utf-8"))
+        for key in override_json:
+            if hasattr(config, key):
+                setattr(config, key, override_json[key])
+                logging.info("覆写配置[{}]为[{}]".format(key, override_json[key]))
+            else:
+                logging.error("无法覆写配置[{}]为[{}]，该配置不存在，请检查override.json是否正确".format(key, override_json[key]))
 
 
 # 临时函数，用于加载config和上下文，未来统一放在config类
@@ -123,17 +85,10 @@ def load_config():
         logging.warning("配置文件不完整，您可以依据config-template.py检查config.py")
 
     # 检查override.json覆盖
-    if os.path.exists("override.json"):
-        override_json = json.load(open("override.json", "r", encoding="utf-8"))
-        for key in override_json:
-            if hasattr(config, key):
-                setattr(config, key, override_json[key])
-                logging.info("覆写配置[{}]为[{}]".format(key, override_json[key]))
-            else:
-                logging.error("无法覆写配置[{}]为[{}]，该配置不存在，请检查override.json是否正确".format(key, override_json[key]))
+    override_config()
 
     if not is_integrity:
-        logging.warning("以上配置已被设为默认值，将在3秒后继续启动... ")
+        logging.warning("以上不存在的配置已被设为默认值，将在3秒后继续启动... ")
         time.sleep(3)
 
     # 存进上下文
@@ -238,9 +193,7 @@ def start(first_time_init=False):
         pkg.openai.session.load_sessions()
 
         # 初始化qq机器人
-        qqbot = pkg.qqbot.manager.QQBotManager(mirai_http_api_config=config.mirai_http_api_config,
-                                               timeout=config.process_message_timeout, retry=config.retry_times,
-                                               first_time_init=first_time_init)
+        qqbot = pkg.qqbot.manager.QQBotManager(first_time_init=first_time_init)
 
         # 加载插件
         import pkg.plugin.host
@@ -255,7 +208,8 @@ def start(first_time_init=False):
             def run_bot_wrapper():
                 global known_exception_caught
                 try:
-                    qqbot.bot.run()
+                    logging.info("使用账号: {}".format(qqbot.bot_account_id))
+                    qqbot.adapter.run_sync()
                 except TypeError as e:
                     if str(e).__contains__("argument 'debug'"):
                         logging.error(
@@ -290,6 +244,8 @@ def start(first_time_init=False):
                             "mirai-api-http端口无法使用:{}, 解决方案: https://github.com/RockChinQ/QChatGPT/issues/22".format(
                                 e))
                     else:
+                        import traceback
+                        traceback.print_exc()
                         logging.error(
                             "捕捉到未知异常:{}, 请前往 https://github.com/RockChinQ/QChatGPT/issues 查找或提issue".format(e))
                         known_exception_caught = True
@@ -309,9 +265,14 @@ def start(first_time_init=False):
         
         if first_time_init:
             if not known_exception_caught:
-                logging.info("QQ: {}, MAH: {}".format(config.mirai_http_api_config['qq'], config.mirai_http_api_config['host']+":"+str(config.mirai_http_api_config['port'])))
-                logging.info('程序启动完成,如长时间未显示 ”成功登录到账号xxxxx“ ,并且不回复消息,请查看 '
-                             'https://github.com/RockChinQ/QChatGPT/issues/37')
+                import config
+                if config.msg_source_adapter == "yirimirai":
+                    logging.info("QQ: {}, MAH: {}".format(config.mirai_http_api_config['qq'], config.mirai_http_api_config['host']+":"+str(config.mirai_http_api_config['port'])))
+                    logging.critical('程序启动完成,如长时间未显示 "成功登录到账号xxxxx" ,并且不回复消息,解决办法(请勿到群里问): '
+                                'https://github.com/RockChinQ/QChatGPT/issues/37')
+                elif config.msg_source_adapter == 'nakuru':
+                    logging.info("host: {}, port: {}, http_port: {}".format(config.nakuru_config['host'], config.nakuru_config['port'], config.nakuru_config['http_port']))
+                    logging.critical('程序启动完成,如长时间未显示 "Protocol: connected" ,并且不回复消息,请检查config.py中的nakuru_config是否正确')
             else:
                 sys.exit(1)
         else:
@@ -348,8 +309,9 @@ def start(first_time_init=False):
     try:
         import pkg.utils.announcement as announcement
         new_announcement = announcement.fetch_new()
-        if new_announcement != "":
-            logging.critical("[公告] {}".format(new_announcement))
+        if len(new_announcement) > 0:
+            for announcement in new_announcement:
+                logging.critical("[公告]<{}> {}".format(announcement['time'], announcement['content']))
     except Exception as e:
         logging.warning("获取公告失败:{}".format(e))
 
@@ -413,6 +375,11 @@ def check_file():
 
 
 def main():
+    global use_override
+    # 检查是否携带了 --override 或 -r 参数
+    if '--override' in sys.argv or '-r' in sys.argv:
+        use_override = True
+
     # 初始化相关文件
     check_file()
 

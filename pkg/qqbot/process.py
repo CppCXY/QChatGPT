@@ -53,9 +53,6 @@ def process_message(launcher_type: str, launcher_id: int, text_message: str, mes
     config = pkg.utils.context.get_config()
     if config.debug_mode and launcher_type == "group" and launcher_id != 162900465:
         return MessageChain(Plain("[bot] 当前正在维护"))
-
-    if who == "bing" and not is_admin(sender_id):
-        return MessageChain(Plain("[bot] 当前仅管理员可用bing"))
     
     # 检查发送方是否被禁用
     if banlist.is_banned(launcher_type, launcher_id, sender_id):
@@ -66,13 +63,16 @@ def process_message(launcher_type: str, launcher_id: int, text_message: str, mes
         logging.info("根据忽略规则忽略消息: {}".format(text_message))
         return []
 
+    import config
+
+    if not config.wait_last_done and session_name in processing:
+        return MessageChain([Plain(tips_custom.message_drop_tip)])
+
     # 检查是否被禁言
     if launcher_type == 'group':
-        result = mgr.bot.member_info(target=launcher_id, member_id=mgr.bot.qq).get()
-        result = asyncio.run(result)
-        if result.mute_time_remaining > 0:
-            logging.info("机器人被禁言,跳过消息处理(group_{},剩余{}s)".format(launcher_id,
-                                                                              result.mute_time_remaining))
+        is_muted = mgr.adapter.is_muted(launcher_id)
+        if is_muted:
+            logging.info("机器人被禁言,跳过消息处理(group_{})".format(launcher_id))
             return reply
 
     import config
@@ -86,9 +86,6 @@ def process_message(launcher_type: str, launcher_id: int, text_message: str, mes
 
     # 处理消息
     try:
-        if session_name in processing:
-            pkg.openai.session.get_session(session_name).release_response_lock()
-            return MessageChain([Plain("[bot]err:正在处理中，请稍后再试")])
 
         config = pkg.utils.context.get_config()
 

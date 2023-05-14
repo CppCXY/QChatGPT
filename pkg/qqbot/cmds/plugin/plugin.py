@@ -10,7 +10,7 @@ import pkg.utils.updater as updater
     parent=None,
     name="plugin",
     description="插件管理",
-    usage="!plugin\n!plugin get <插件仓库地址>\!plugin update\n!plugin del <插件名>\n!plugin on <插件名>\n!plugin off <插件名>",
+    usage="!plugin\n!plugin get <插件仓库地址>\n!plugin update\n!plugin del <插件名>\n!plugin on <插件名>\n!plugin off <插件名>",
     aliases=[],
     privilege=2
 )
@@ -117,8 +117,8 @@ class PluginUpdateCommand(AbstractCommandNode):
                         import pkg.utils.pkgmgr
                         pkg.utils.pkgmgr.install_requirements("/".join(plugin['path'].split('/')[:-1])+"/requirements.txt")
 
-                        import main
-                        main.reset_logging()
+                        import pkg.utils.log as log
+                        log.reset_logging()
 
                 pkg.utils.context.get_qqbot_manager().notify_admin("已更新插件: {}".format(", ".join(updated)))
             except Exception as e:

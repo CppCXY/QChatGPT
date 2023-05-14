@@ -60,7 +60,7 @@ class ModelRequest:
         """异步请求"""
 
         try:
-            self.ret:dict = await self.request_fun(**kwargs)
+            self.ret: dict = await self.request_fun(**kwargs)
             self.request_ready = True
         except aiE.APIConnectionError as e:
             self.error_info = "{}\n请检查网络连接或代理是否正常".format(e)
@@ -69,7 +69,7 @@ class ModelRequest:
             self.error_info = "{}\n该错误可能是由于http_proxy格式设置错误引起的"
         except Exception as e:
             self.error_info = "{}\n由于请求异常产生的未知错误，请查看日志".format(e)
-            raise Exception(self.error_info)
+            raise type(e)(self.error_info)
 
     def request(self, **kwargs):
         """向接口发起请求"""

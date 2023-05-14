@@ -11,6 +11,7 @@ import traceback
 import pkg.utils.context as context
 import pkg.plugin.switch as switch
 import pkg.plugin.settings as settings
+import pkg.qqbot.adapter as msadapter
 
 from mirai import Mirai
 
@@ -156,8 +157,8 @@ def install_plugin(repo_url: str):
         import pkg.utils.pkgmgr
         pkg.utils.pkgmgr.install_requirements("plugins/"+repo_url.split(".git")[0].split("/")[-1]+"/requirements.txt")
 
-        import main
-        main.reset_logging()
+        import pkg.utils.log as log
+        log.reset_logging()
 
 
 def uninstall_plugin(plugin_name: str) -> str:
@@ -276,13 +277,17 @@ class PluginHost:
         """获取机器人对象"""
         return context.get_qqbot_manager().bot
 
+    def get_bot_adapter(self) -> msadapter.MessageSourceAdapter:
+        """获取消息源适配器"""
+        return context.get_qqbot_manager().adapter
+
     def send_person_message(self, person, message):
         """发送私聊消息"""
-        asyncio.run(self.get_bot().send_friend_message(person, message))
+        self.get_bot_adapter().send_message("person", person, message)
 
     def send_group_message(self, group, message):
         """发送群消息"""
-        asyncio.run(self.get_bot().send_group_message(group, message))
+        self.get_bot_adapter().send_message("group", group, message)
 
     def notify_admin(self, message):
         """通知管理员"""
