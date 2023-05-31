@@ -1,3 +1,6 @@
 [submodule "plugins/revLibs"]
 	path = plugins/revLibs
 	url = git@github.com:CppCXY/revLibs.git
+[submodule "plugins/QCPNovelAi"]
+	path = plugins/QCPNovelAi
+	url = git@github.com:CppCXY/QCPNovelAi.git
